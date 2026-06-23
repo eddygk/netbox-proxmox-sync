@@ -80,6 +80,16 @@ network is hardcoded. Key knobs:
 `.env`, `*.json` data snapshots, and credential files are gitignored. Do not commit
 real tokens, MACs, or topology — keep them in `.env` / `prefixes.json`.
 
+After cloning, install the pre-commit secret guard (blocks staged credentials,
+credential files, and bare MAC addresses before they can be committed):
+
+```bash
+scripts/install-hooks.sh
+```
+
+GitHub secret-scanning push protection is also enabled on the upstream repo as a
+server-side backstop.
+
 ## License
 
 MIT

@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# Pre-commit secret/PII guard for netbox-proxmox-sync.
+# Blocks commits that include credential files or staged content matching secret /
+# private-network patterns. Install with: scripts/install-hooks.sh
+#
+# Bypass intentionally (rarely!) with:  git commit --no-verify
+set -u
+
+fail=0
+note() { echo "  ✗ $*"; fail=1; }
+
+# 1) Never commit these files, even if .gitignore is bypassed with `git add -f`.
+BLOCKED_FILES_RE='(^|/)(\.env$|\.env\..*[^e][^x][^a][^m][^p][^l][^e]$|.*\.unifi-api-key$|.*\.idrac-credentials$|.*credential.*|import-data/)'
+while IFS= read -r f; do
+  [ -z "$f" ] && continue
+  case "$f" in
+    *.example|*example*) continue ;;  # allow .env.example, prefixes.example.json
+  esac
+  if printf '%s\n' "$f" | grep -qE "$BLOCKED_FILES_RE"; then
+    note "blocked file staged: $f  (secrets/data must never be committed)"
+  fi
+done < <(git diff --cached --name-only)
+
+# 2) Scan the STAGED DIFF (added lines only) for secret / PII patterns.
+added="$(git diff --cached --unified=0 | grep -E '^\+' | grep -vE '^\+\+\+')"
+
+scan() { # <regex> <human description>
+  if printf '%s' "$added" | grep -qiE "$1"; then
+    note "staged content matches: $2"
+  fi
+}
+
+# Live credential assignments (token=..., password=..., api key=...) with a real value.
+scan '(token|secret|password|passwd|api[_-]?key)["'"'"' ]*[:=][[:space:]]*["'"'"']?[A-Za-z0-9._-]{12,}' "a credential assignment with a value (use .env / placeholders)"
+# Proxmox API token id with a secret-looking UUID after it.
+scan '[A-Za-z0-9_-]+@(pam|pve)![A-Za-z0-9_-]+=[A-Za-z0-9-]{20,}' "a Proxmox API token secret"
+# Bare MAC addresses (private hardware identifiers).
+scan '([0-9a-f]{2}:){5}[0-9a-f]{2}' "a MAC address (avoid committing real MACs)"
+
+if [ "$fail" -ne 0 ]; then
+  echo ""
+  echo "pre-commit: blocked — see above. Move secrets to .env, use placeholders in"
+  echo "examples, or (if a finding is a false positive) commit with --no-verify."
+  exit 1
+fi
+exit 0
