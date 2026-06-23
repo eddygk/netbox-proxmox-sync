@@ -1003,6 +1003,8 @@ def main(argv: list[str] | None = None) -> int:
                         help="Allow iDRAC/static data to overwrite manually-set node fields")
     parser.add_argument("--no-reap", action="store_true",
                         help="Disable the removal lifecycle (offline/decom/delete of missing VMs)")
+    parser.add_argument("--report", action="store_true",
+                        help="Log field-level before->after for every change (pairs well with --dry-run)")
     parser.add_argument("--log-level", default="INFO")
     args = parser.parse_args(argv)
 
@@ -1021,7 +1023,7 @@ def main(argv: list[str] | None = None) -> int:
     if not netbox_url or not netbox_token:
         LOG.error("NETBOX_URL and NETBOX_TOKEN required")
         return 2
-    nb = NetBoxClient(netbox_url, netbox_token, dry_run=args.dry_run)
+    nb = NetBoxClient(netbox_url, netbox_token, dry_run=args.dry_run, report=args.report)
     stats = Stats()
 
     idrac = None

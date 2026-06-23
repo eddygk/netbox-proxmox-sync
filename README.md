@@ -68,6 +68,8 @@ network is hardcoded. Key knobs:
 - `--only-vmid N` — limit to one guest
 - `--idrac` — enable live iDRAC/Redfish node enrichment
 - `--no-reap` — disable the removal lifecycle
+- `--report` — log field-level before→after for every change (great with `--dry-run`
+  to answer "why did X change?")
 
 ## Requirements
 

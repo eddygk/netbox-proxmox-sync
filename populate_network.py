@@ -125,7 +125,7 @@ def compare_value(value: Any) -> Any:
 
 
 class NetBoxClient:
-    def __init__(self, netbox_url: str, token: str, dry_run: bool = False):
+    def __init__(self, netbox_url: str, token: str, dry_run: bool = False, report: bool = False):
         base = netbox_url.rstrip("/")
         if not base.endswith("/api"):
             base = f"{base}/api"
@@ -139,6 +139,7 @@ class NetBoxClient:
             }
         )
         self.dry_run = dry_run
+        self.report = report  # log field-level before->after on each PATCH
         self._dry_run_id = -1
 
     def _url(self, path: str) -> str:
@@ -175,12 +176,31 @@ class NetBoxClient:
         return response.json()
 
     def patch(self, path: str, payload: dict[str, Any]) -> Any:
+        if self.report:
+            self._report_diff(path, payload)
         if self.dry_run:
             LOG.info("dry-run PATCH %s %s", path, self._summarize(payload))
             return None
         response = self.session.patch(self._url(path), json=payload, timeout=30)
         response.raise_for_status()
         return response.json()
+
+    def _report_diff(self, path: str, payload: dict[str, Any]) -> None:
+        """Log field-level before->after for a PATCH (debugging 'why did X change')."""
+        try:
+            current = self.get(path) or {}
+        except Exception:
+            current = {}
+        for field, new in payload.items():
+            if field == "custom_fields" and isinstance(new, dict):
+                cur_cf = current.get("custom_fields") or {}
+                for k, v in new.items():
+                    if compare_value(cur_cf.get(k)) != compare_value(v):
+                        LOG.info("    REPORT %s cf.%s: %r -> %r", path, k, cur_cf.get(k), v)
+                continue
+            if compare_value(current.get(field)) != compare_value(new):
+                LOG.info("    REPORT %s %s: %r -> %r", path, field,
+                         compare_value(current.get(field)), compare_value(new))
 
     def delete(self, path: str) -> bool:
         if self.dry_run:
