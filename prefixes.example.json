@@ -1,0 +1,6 @@
+[
+  {"prefix": "10.0.10.0/24", "vlan": 10, "name": "Management"},
+  {"prefix": "10.0.20.0/24", "vlan": 20, "name": "Servers"},
+  {"prefix": "10.0.30.0/24", "vlan": 30, "name": "Clients"},
+  {"prefix": "10.0.40.0/24", "vlan": 40, "name": "IoT"}
+]

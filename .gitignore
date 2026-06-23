@@ -1,0 +1,31 @@
+# Secrets — NEVER commit
+.env
+*.env
+!.env.example
+.unifi-api-key
+.idrac-credentials
+*.secret
+*token*
+*credential*
+
+# Live network data snapshots (contain real MACs / IPs / hostnames)
+import-data/
+*.json
+!prefixes.example.json
+
+# Local config that may contain your real topology
+prefixes.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Editor / OS
+*.swp
+.DS_Store
+*.bak
+*.bak-*
+crontab.backup-*
