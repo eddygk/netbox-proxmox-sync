@@ -92,6 +92,15 @@ scripts/install-hooks.sh
 GitHub secret-scanning push protection is also enabled on the upstream repo as a
 server-side backstop.
 
+## Companion skill
+
+An operator runbook for driving this tool with an AI agent lives in
+[`skills/netbox-sync-ops/`](skills/netbox-sync-ops/) and is published on ClawHub:
+
+```bash
+clawhub install netbox-sync-ops
+```
+
 ## License
 
 MIT
