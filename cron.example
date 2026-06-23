@@ -1,0 +1,18 @@
+# Example crontab for netbox-proxmox-sync.
+# Install with:  crontab -e   (paste these lines, adjust paths as needed)
+#
+# Both scripts read config from .env (see .env.example) and are idempotent +
+# --dry-run capable, so they're safe to run on a schedule.
+
+# Proxmox -> NetBox: VMs/LXCs, interfaces, IPs, VLANs, disks, platforms, tags,
+# the Proxmox node, and the VM removal lifecycle. Runs at the top of every hour.
+0 * * * * /usr/bin/env python3 /opt/netbox-sync/sync_v2.py >> /var/log/netbox-sync.log 2>&1
+
+# UniFi -> NetBox: wireless LANs, switch ports + cabling, and MAC correlation.
+# Runs 15 min past the hour so it lands after the Proxmox sync (which creates the
+# interface MACs that UniFi correlation matches against).
+15 * * * * cd /opt/netbox-sync && /usr/bin/python3 /opt/netbox-sync/fetch_unifi_and_populate.py >> /var/log/netbox-unifi.log 2>&1
+
+# Optional: enable live iDRAC/Redfish node hardware enrichment by adding --idrac
+# to the sync_v2 line above (kept off by default so the hourly run never depends
+# on the BMC being reachable). Run it less often / manually if you prefer.
