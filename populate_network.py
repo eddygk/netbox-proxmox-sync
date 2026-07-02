@@ -172,6 +172,13 @@ class NetBoxClient:
             self._dry_run_id -= 1
             return result
         response = self.session.post(self._url(path), json=payload, timeout=30)
+        # IP-ownership guard: with NetBox ENFORCE_GLOBAL_UNIQUE, a duplicate IP is
+        # rejected (400). The authoritative Proxmox-declared record wins; UniFi
+        # (observed) skips + logs instead of crashing. (added 2026-07-02)
+        if response.status_code == 400 and "ip-addresses" in path and "Duplicate" in (response.text or ""):
+            LOG.warning("skip duplicate IP %s (already owned; Proxmox-declared wins): %s",
+                        payload.get("address"), (response.text or "")[:180])
+            return None
         response.raise_for_status()
         return response.json()
 
