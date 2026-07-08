@@ -8,7 +8,9 @@ no NetBox Assurance / Diode / Orb required.
 ## What it models
 
 **From Proxmox (`sync_v2.py`):**
-- VirtualMachines (QEMU + LXC) — auto-created and kept in sync (status, vCPU, memory)
+- VirtualMachines (QEMU + LXC) — auto-created and kept in sync (status, vCPU, memory). Status mirrors
+  the Proxmox power state of a **present** guest: `running` → `active`, anything else → `offline`
+  (guests that disappear from Proxmox entirely follow the Removal lifecycle below instead)
 - VM interfaces + MAC addresses, from `net*` config
 - IP addresses assigned to the right interface (LXC `ip=`, QEMU via guest agent)
 - VLANs from interface `tag=`
